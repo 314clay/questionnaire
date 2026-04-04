@@ -555,6 +555,15 @@ async def serve_questionnaire(qid: str):
 
     payload = json.loads(q["payload"]) if isinstance(q["payload"], str) else q["payload"]
     closed = q["closed_at"] is not None
+
+    # For persistent types, sync initial_state with the latest response
+    if q["is_persistent"]:
+        latest = await db.get_responses(qid, latest=True)
+        if latest:
+            last_data = json.loads(latest[0]["response_data"]) if isinstance(latest[0]["response_data"], str) else latest[0]["response_data"]
+            if "value" in last_data:
+                payload["initial_state"] = last_data["value"]
+
     html = render_template(q["type"], qid, payload, closed=closed)
     return HTMLResponse(html)
 
