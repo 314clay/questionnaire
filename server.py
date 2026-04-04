@@ -1,8 +1,11 @@
 import asyncio
 import base64
+import glob
 import json
+import logging
 import os
 import re
+import subprocess
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -212,6 +215,50 @@ async def process_audio(response_id: int, audio_clips: list[dict]) -> int:
     return count
 
 
+# --- Actions ---
+
+log = logging.getLogger("questionnaire")
+
+
+def get_xauthority() -> str | None:
+    matches = glob.glob("/tmp/serverauth.*") + glob.glob("/tmp/host-tmp/serverauth.*")
+    return matches[0] if matches else None
+
+
+def execute_dpms(response_data: dict):
+    value = response_data.get("value", False)
+    state = "on" if value else "off"
+    xauth = get_xauthority()
+    env = {**os.environ, "DISPLAY": ":0"}
+    if xauth:
+        env["XAUTHORITY"] = xauth
+    try:
+        result = subprocess.run(
+            ["xset", "dpms", "force", state],
+            env=env, timeout=5, capture_output=True, text=True,
+        )
+        log.info(f"DPMS {state}: rc={result.returncode} stderr={result.stderr.strip()}")
+    except Exception as e:
+        log.error(f"DPMS {state} failed: {e}")
+
+
+ACTIONS = {
+    "dpms": execute_dpms,
+}
+
+
+def execute_action(questionnaire: dict, response_data: dict):
+    payload = json.loads(questionnaire["payload"]) if isinstance(questionnaire["payload"], str) else questionnaire["payload"]
+    action = payload.get("_action")
+    if not action:
+        return
+    handler = ACTIONS.get(action)
+    if handler:
+        handler(response_data)
+    else:
+        log.warning(f"Unknown action: {action}")
+
+
 # --- App ---
 
 @asynccontextmanager
@@ -358,6 +405,9 @@ async def respond(qid: str, req: RespondRequest):
     audio_count = 0
     if req.audio:
         audio_count = await process_audio(response_id, [c.model_dump() for c in req.audio])
+
+    # Execute action if configured
+    execute_action(q, response_data)
 
     # Broadcast to SSE listeners
     await broadcast(qid, "response", {

@@ -7,8 +7,11 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres@127.0.0.1:5433/questionnaire
       - AUDIO_DIR=/data/audio
+      - DISPLAY=:0
     volumes:
       - questionnaire-audio:/data/audio
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /tmp:/tmp/host-tmp:ro
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:3050/api/state"]
       interval: 30s

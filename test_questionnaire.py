@@ -272,6 +272,33 @@ def test_ask_creates_new_channel():
     print("  ask creates new channel OK")
 
 
+def test_action_in_payload():
+    """Test that action field in payload doesn't break anything (action won't execute without xset)."""
+    status, data = api("POST", "/api/create", {
+        "type": "toggle",
+        "payload": {
+            "question": "Action test?",
+            "initial_state": False,
+            "_action": "dpms",
+        },
+        "id": "test-action",
+    })
+    assert status == 201
+    assert data["is_persistent"] is True
+
+    # Respond — action will fail silently (no xset in CI) but response should still store
+    status, data = api("POST", "/api/respond/test-action", {
+        "value": True, "type": "toggle",
+    })
+    assert status == 201
+
+    # Verify response stored
+    status, data = api("GET", "/api/response/test-action")
+    assert data["response_count"] == 1
+    assert data["responses"][0]["response_data"]["value"] is True
+    print("  action in payload OK")
+
+
 def test_validation():
     # Bad type
     status, data = api("POST", "/api/create", {
@@ -293,7 +320,7 @@ def test_validation():
 
 def cleanup():
     """Remove test questionnaires."""
-    for qid in ["test-mc", "test-toggle", "test-index", "test-channel", "test-new-channel"]:
+    for qid in ["test-mc", "test-toggle", "test-index", "test-channel", "test-new-channel", "test-action"]:
         try:
             api("DELETE", f"/api/questionnaire/{qid}")
         except Exception:
@@ -318,6 +345,7 @@ if __name__ == "__main__":
         test_index_page,
         test_ask_channel_flow,
         test_ask_creates_new_channel,
+        test_action_in_payload,
         test_404,
         test_validation,
     ]
