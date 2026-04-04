@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="../audio-recorder.js"></script>
+  <script src="../audio-widget.js"></script>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Question</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="options" id="options"></div>
+    <button class="submit-btn" id="submit" disabled>Submit</button>
+    <div class="feedback" id="feedback">Response recorded</div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "multiple-choice",
+  question: "Of these options, which type of cheese do you like?",
+  extra_info: "We've only included soft cheeses on this list because they pair best with the crackers we have on hand.",
+  options: [
+    { label: "Brie", info: "French classic, creamy and mild with an edible white rind" },
+    { label: "Burrata", info: "Italian, with a soft center of stracciatella and cream" },
+    { label: "Camembert", info: "Similar to Brie but deeper, earthier flavor" },
+    { label: "Chevre", info: "Fresh goat cheese, tangy and spreadable" },
+    { label: "Mascarpone", info: "Rich Italian cream cheese, used in tiramisu" }
+  ]
+};
+
+AudioWidget.init();
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10001';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const optionsEl = document.getElementById('options');
+const submitBtn = document.getElementById('submit');
+let selected = null;
+let customText = '';
+
+// Render predefined options
+payload.options.forEach((opt, i) => {
+  const el = document.createElement('div');
+  el.className = 'option';
+  el.innerHTML = `
+    <div class="option-indicator"></div>
+    <div class="option-content">
+      <div class="option-label">${opt.label}</div>
+      ${opt.info ? `<div class="option-info">${opt.info}</div>` : ''}
+    </div>
+  `;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selected = i;
+    customText = '';
+    customInput.value = '';
+    customOption.classList.remove('selected');
+    submitBtn.disabled = false;
+  });
+  optionsEl.appendChild(el);
+});
+
+// "Other" option with inline text input
+const customOption = document.createElement('div');
+customOption.className = 'option custom-option';
+customOption.innerHTML = `
+  <div class="option-indicator"></div>
+  <div class="option-content">
+    <div class="option-label">Other</div>
+    <input type="text" class="custom-input" placeholder="Type your answer..." />
+  </div>
+`;
+const customInput = customOption.querySelector('.custom-input');
+
+customOption.addEventListener('click', (e) => {
+  if (e.target === customInput) return;
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  customOption.classList.add('selected');
+  selected = 'custom';
+  customInput.focus();
+  submitBtn.disabled = customInput.value.trim().length === 0;
+});
+
+customInput.addEventListener('focus', () => {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  customOption.classList.add('selected');
+  selected = 'custom';
+});
+
+customInput.addEventListener('input', () => {
+  customText = customInput.value.trim();
+  submitBtn.disabled = customText.length === 0;
+});
+
+optionsEl.appendChild(customOption);
+
+// --- Submit (one-shot: locks after submit) ---
+submitBtn.addEventListener('click', () => {
+  if (selected === null) return;
+  if (selected === 'custom' && !customText) return;
+
+  const response = {
+    port,
+    type: payload.type,
+    answer: selected === 'custom' ? customText : payload.options[selected].label,
+    answer_index: selected === 'custom' ? null : selected,
+    is_custom: selected === 'custom',
+    audio: AudioWidget.getAudio(),
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+
+  submitBtn.style.display = 'none';
+  optionsEl.classList.add('locked');
+  customInput.disabled = true;
+  AudioWidget.lock();
+  document.getElementById('feedback').classList.add('sent');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="../audio-recorder.js"></script>
+  <script src="../audio-widget.js"></script>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Question</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="options" id="options"></div>
+    <button class="submit-btn" id="submit">Submit</button>
+    <div class="feedback" id="feedback">Response recorded</div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "multi-select",
+  question: "Which toppings do you want on your pizza?",
+  extra_info: "Select all that apply, or submit with none. We'll do our best to accommodate.",
+  options: [
+    { label: "Pepperoni" },
+    { label: "Mushrooms", info: "Cremini, sauteed" },
+    { label: "Bell Peppers", info: "Roasted red and green" },
+    { label: "Onions", info: "Caramelized" },
+    { label: "Olives", info: "Kalamata" },
+    { label: "Jalapenos" }
+  ]
+};
+
+AudioWidget.init();
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10003';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const optionsEl = document.getElementById('options');
+const submitBtn = document.getElementById('submit');
+const selected = new Set();
+let customText = '';
+
+// Render predefined options
+payload.options.forEach((opt, i) => {
+  const el = document.createElement('div');
+  el.className = 'option';
+  el.innerHTML = `
+    <div class="option-indicator checkbox"></div>
+    <div class="option-content">
+      <div class="option-label">${opt.label}</div>
+      ${opt.info ? `<div class="option-info">${opt.info}</div>` : ''}
+    </div>
+  `;
+  el.addEventListener('click', () => {
+    el.classList.toggle('selected');
+    if (selected.has(i)) selected.delete(i); else selected.add(i);
+  });
+  optionsEl.appendChild(el);
+});
+
+// "Other" option with inline text input
+const customOption = document.createElement('div');
+customOption.className = 'option custom-option';
+customOption.innerHTML = `
+  <div class="option-indicator checkbox"></div>
+  <div class="option-content">
+    <div class="option-label">Other</div>
+    <input type="text" class="custom-input" placeholder="Type your own..." />
+  </div>
+`;
+const customInput = customOption.querySelector('.custom-input');
+
+customOption.addEventListener('click', (e) => {
+  if (e.target === customInput) return;
+  const wasSelected = customOption.classList.contains('selected');
+  customOption.classList.toggle('selected');
+  if (!wasSelected) customInput.focus();
+});
+
+customInput.addEventListener('focus', () => {
+  customOption.classList.add('selected');
+});
+
+customInput.addEventListener('input', () => {
+  customText = customInput.value.trim();
+  if (customText) {
+    customOption.classList.add('selected');
+  }
+});
+
+optionsEl.appendChild(customOption);
+
+// --- Submit (one-shot: locks after submit) ---
+submitBtn.addEventListener('click', () => {
+  const answers = [...selected].map(i => payload.options[i].label);
+  const customActive = customOption.classList.contains('selected') && customText;
+  if (customActive) answers.push(customText);
+
+  const response = {
+    port,
+    type: payload.type,
+    answers,
+    answer_indices: [...selected],
+    custom: customActive ? customText : null,
+    audio: AudioWidget.getAudio(),
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+
+  submitBtn.style.display = 'none';
+  optionsEl.classList.add('locked');
+  customInput.disabled = true;
+  AudioWidget.lock();
+  document.getElementById('feedback').classList.add('sent');
+});
+</script>
+</body>
+</html>

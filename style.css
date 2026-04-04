@@ -1,0 +1,1128 @@
+/* Questionnaire Kiosk — Neumorphic Design System (Cat-Tracker)
+   Surface: #F5F5F7 base, light neumorphic
+   All interactive elements: raised default, inset when pressed/active
+   iPad-optimized
+*/
+
+:root {
+  /* Surfaces */
+  --surface-base: #F5F5F7;
+  --surface-card: #F5F5F7;
+  --surface-inset: #EAEAEC;
+
+  /* Text — light mode versions matching cat-tracker's hierarchy */
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-muted: rgba(0, 0, 0, 0.3);
+
+  /* Accents */
+  --accent-blue: #007AFF;
+  --accent-green: #30D158;
+  --accent-red: #FF453A;
+  --accent-amber: #FFB50F;
+
+  /* Neumorphic shadows */
+  --shadow-raised: 6px 6px 12px #d1d1d6, -6px -6px 12px #ffffff;
+  --shadow-medium: 4px 4px 8px #d1d1d6, -4px -4px 8px #ffffff;
+  --shadow-small: 2px 2px 5px #d1d1d6, -2px -2px 5px #ffffff;
+  --shadow-pressed: inset 4px 4px 8px #d1d1d6, inset -4px -4px 8px #ffffff;
+
+  /* Radii */
+  --radius-card: 20px;
+  --radius-btn: 18px;
+  --radius-btn-sm: 14px;
+  --radius-pill: 12px;
+
+  /* Typography */
+  --font: "SF Pro Text", system-ui, -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --letter-spacing: -0.021em;
+
+  /* Motion */
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   Reset
+   ======================================== */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  min-height: 100vh;
+}
+
+/* ========================================
+   Card
+   ======================================== */
+.card {
+  width: 100%;
+  max-width: 560px;
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  padding: 50px 40px;
+  box-shadow: var(--shadow-raised);
+}
+
+/* ========================================
+   Question header
+   ======================================== */
+.question-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-blue);
+  margin-bottom: 10px;
+}
+
+.question-text {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.question-info {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 25px;
+}
+
+/* ========================================
+   Option buttons (multiple-choice / multi-select)
+   ======================================== */
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: var(--surface-base);
+  border-radius: var(--radius-btn-sm);
+  padding: 16px 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow-small);
+  border: 2px solid transparent;
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.option:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.option:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.985);
+}
+
+.option.selected {
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-pressed);
+}
+
+/* Radio indicator */
+.option-indicator {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-base);
+  box-shadow: inset 2px 2px 4px #d1d1d6, inset -2px -2px 4px #ffffff;
+  margin-top: 1px;
+  transition: background var(--transition), box-shadow var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.option.selected .option-indicator {
+  background: var(--accent-blue);
+  box-shadow: var(--shadow-small);
+}
+
+.option.selected .option-indicator::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* Checkbox variant for multi-select */
+.option-indicator.checkbox {
+  border-radius: 6px;
+}
+
+.option.selected .option-indicator.checkbox::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  border-radius: 0;
+  background: none;
+  border-left: 2.5px solid #ffffff;
+  border-bottom: 2.5px solid #ffffff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.option-content {
+  flex: 1;
+}
+
+.option-label {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.option-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.45;
+}
+
+/* --- Custom "Other" input inside option --- */
+.custom-option .custom-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  color: var(--text-primary);
+  transition: border-color var(--transition);
+}
+
+.custom-option .custom-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+.custom-option .custom-input::placeholder {
+  color: var(--text-muted);
+}
+
+.custom-option .custom-input:disabled {
+  opacity: 0.5;
+}
+
+/* ========================================
+   Toggle switch
+   ======================================== */
+.toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.toggle-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.toggle-status {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: color var(--transition);
+}
+
+.toggle-status.on  { color: var(--accent-green); }
+.toggle-status.off { color: var(--text-secondary); }
+
+.toggle-track {
+  position: relative;
+  width: 68px;
+  height: 38px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  border-radius: 19px;
+  cursor: pointer;
+  transition: background var(--transition), box-shadow var(--transition);
+  flex-shrink: 0;
+}
+
+.toggle-track.on {
+  background: var(--accent-green);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.15), inset -2px -2px 5px rgba(255, 255, 255, 0.1);
+}
+
+.toggle-track.large {
+  width: 84px;
+  height: 44px;
+  border-radius: 22px;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 32px;
+  height: 32px;
+  background: #ffffff;
+  border-radius: 50%;
+  transition: transform var(--transition);
+  box-shadow: 2px 2px 5px #d1d1d6, -1px -1px 3px #ffffff;
+}
+
+.toggle-track.on .toggle-thumb {
+  transform: translateX(30px);
+}
+
+.toggle-track.large .toggle-thumb {
+  width: 38px;
+  height: 38px;
+}
+
+.toggle-track.large.on .toggle-thumb {
+  transform: translateX(40px);
+}
+
+/* ========================================
+   Text input
+   ======================================== */
+.text-input-wrapper {
+  margin-bottom: 25px;
+}
+
+.text-input {
+  width: 100%;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  border: 2px solid transparent;
+  border-radius: var(--radius-btn-sm);
+  padding: 16px 18px;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  resize: vertical;
+  min-height: 52px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-pressed), 0 0 0 3px rgba(0, 122, 255, 0.15);
+}
+
+.text-input::placeholder {
+  color: var(--text-muted);
+}
+
+.char-count {
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* ========================================
+   Confirm buttons
+   ======================================== */
+.confirm-buttons {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 18px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-btn);
+  background: var(--surface-base);
+  box-shadow: var(--shadow-medium);
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+}
+
+.confirm-btn:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.confirm-btn:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.97);
+}
+
+.confirm-btn.selected.yes {
+  border-color: var(--accent-green);
+  box-shadow: var(--shadow-pressed);
+  color: var(--accent-green);
+}
+
+.confirm-btn.selected.no {
+  border-color: var(--accent-red);
+  box-shadow: var(--shadow-pressed);
+  color: var(--accent-red);
+}
+
+/* ========================================
+   Submit button
+   ======================================== */
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  background: var(--accent-blue);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-btn);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  box-shadow: 4px 4px 10px rgba(0, 122, 255, 0.25), var(--shadow-medium);
+  transition: box-shadow var(--transition), opacity var(--transition), transform 0.15s ease;
+}
+
+.submit-btn:hover {
+  box-shadow: 6px 6px 14px rgba(0, 122, 255, 0.3), var(--shadow-raised);
+}
+
+.submit-btn:active {
+  box-shadow: inset 3px 3px 6px rgba(0, 80, 180, 0.3), inset -3px -3px 6px rgba(100, 170, 255, 0.15);
+  transform: scale(0.98);
+}
+
+.submit-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  box-shadow: var(--shadow-small);
+}
+
+.submit-btn:disabled:hover {
+  box-shadow: var(--shadow-small);
+}
+
+/* ========================================
+   Audio recorder
+   ======================================== */
+.submit-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.submit-row .submit-btn {
+  flex: 1;
+}
+
+.audio-btn {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow var(--transition), transform 0.15s ease;
+  position: relative;
+}
+
+.audio-btn:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.audio-btn:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.95);
+}
+
+.audio-btn.recording {
+  box-shadow: var(--shadow-pressed);
+  animation: audioRecPulse 1.5s ease-in-out infinite;
+}
+
+.audio-btn .mic-icon {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-secondary);
+  transition: fill var(--transition);
+}
+
+.audio-btn.recording .mic-icon {
+  fill: var(--accent-red);
+}
+
+.audio-btn.has-audio .mic-icon {
+  fill: var(--accent-green);
+}
+
+@keyframes audioRecPulse {
+  0%, 100% { box-shadow: var(--shadow-pressed), 0 0 0 0 rgba(255, 69, 58, 0.3); }
+  50%      { box-shadow: var(--shadow-pressed), 0 0 0 8px rgba(255, 69, 58, 0); }
+}
+
+.audio-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-height: 20px;
+}
+
+.audio-status .rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  animation: recDotBlink 1s step-end infinite;
+}
+
+@keyframes recDotBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+.audio-status .audio-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font);
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.audio-status .audio-remove:hover {
+  color: var(--accent-red);
+}
+
+/* Clip list */
+.audio-clip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.audio-clip-list.unsupported { display: none; }
+
+.audio-clip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.audio-clip-label {
+  font-weight: 700;
+  color: var(--accent-green);
+  white-space: nowrap;
+}
+
+.audio-clip-meta {
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.audio-clip .audio-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  font-family: var(--font);
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.audio-clip .audio-remove:hover {
+  color: var(--accent-red);
+}
+
+/* Hide audio UI when not supported */
+.audio-btn.unsupported { display: none; }
+.audio-status.unsupported { display: none; }
+
+/* ========================================
+   Feedback states
+   ======================================== */
+.feedback {
+  text-align: center;
+  padding: 16px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: 600;
+  display: none;
+  margin-top: 16px;
+}
+
+.feedback.sent {
+  display: block;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  color: var(--accent-green);
+}
+
+/* ========================================
+   Hold button
+   ======================================== */
+.hold-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.hold-btn {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-raised);
+  border: none;
+  cursor: pointer;
+  transition: box-shadow var(--transition), transform var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.hold-btn .hold-label {
+  position: relative;
+  z-index: 2;
+  transition: color var(--transition);
+  text-align: center;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.hold-btn .hold-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  transition: border-color var(--transition);
+  pointer-events: none;
+}
+
+.hold-btn:hover {
+  box-shadow: 8px 8px 16px #d1d1d6, -8px -8px 16px #ffffff;
+}
+
+.hold-btn.active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.96);
+}
+
+.hold-btn.active .hold-label {
+  color: var(--accent-blue);
+}
+
+.hold-btn.active .hold-ring {
+  border-color: var(--accent-blue);
+  animation: holdPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes holdPulse {
+  0%, 100% { opacity: 1; border-color: var(--accent-blue); }
+  50%      { opacity: 0.5; border-color: rgba(0, 122, 255, 0.3); }
+}
+
+.hold-status {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.hold-status.active {
+  color: var(--accent-blue);
+}
+
+/* ========================================
+   Button grid
+   ======================================== */
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.grid-btn {
+  background: var(--surface-base);
+  box-shadow: var(--shadow-medium);
+  border: 2px solid transparent;
+  border-radius: var(--radius-btn);
+  padding: 20px 16px;
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  transition: all var(--transition);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.grid-btn:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.grid-btn:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.97);
+}
+
+.grid-btn.active {
+  box-shadow: var(--shadow-pressed);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.grid-btn.fired {
+  box-shadow: var(--shadow-pressed);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* ========================================
+   Port badge
+   ======================================== */
+.port-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-small);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+  z-index: 100;
+}
+
+/* ========================================
+   Last-changed timestamp
+   ======================================== */
+.last-changed {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+}
+
+/* ========================================
+   Locked overlay (one-shot post-submit)
+   ======================================== */
+.locked {
+  pointer-events: none;
+  opacity: 0.5;
+  transition: opacity var(--transition);
+}
+
+/* ========================================
+   Multi-Live grid
+   ======================================== */
+.multi-live-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 25px;
+}
+
+.multi-live-btn {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-raised);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow var(--transition), transform var(--transition);
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.multi-live-btn .multi-live-label {
+  position: relative;
+  z-index: 2;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.35;
+  pointer-events: none;
+  padding: 10px;
+  transition: color var(--transition);
+}
+
+.multi-live-btn .multi-live-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  transition: border-color var(--transition);
+  pointer-events: none;
+}
+
+.multi-live-btn:hover {
+  box-shadow: 8px 8px 16px #d1d1d6, -8px -8px 16px #ffffff;
+}
+
+.multi-live-btn.active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.96);
+}
+
+.multi-live-btn.active .multi-live-label {
+  color: var(--accent-blue);
+}
+
+.multi-live-btn.active .multi-live-ring {
+  border-color: var(--accent-blue);
+  animation: holdPulse 1.5s ease-in-out infinite;
+}
+
+/* ========================================
+   Rich Choice cards
+   ======================================== */
+.rich-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.rich-option {
+  position: relative;
+  background: var(--surface-base);
+  border-radius: var(--radius-btn-sm);
+  padding: 20px;
+  cursor: pointer;
+  box-shadow: var(--shadow-small);
+  border: 2px solid transparent;
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rich-option:hover {
+  box-shadow: var(--shadow-medium);
+}
+
+.rich-option:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.985);
+}
+
+.rich-option.selected {
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-pressed);
+}
+
+.rich-option-tag {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-blue);
+  color: #ffffff;
+}
+
+.rich-option-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.rich-option-label {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.rich-option-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 12px;
+}
+
+.rich-option-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rich-option-chip {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-inset);
+  box-shadow: inset 1px 1px 3px #d1d1d6, inset -1px -1px 3px #ffffff;
+  color: var(--text-secondary);
+}
+
+.rich-option.selected .rich-option-chip {
+  color: var(--accent-blue);
+}
+
+/* ========================================
+   Combo (multi-step wizard)
+   ======================================== */
+.combo-progress {
+  margin-bottom: 25px;
+}
+
+.combo-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.combo-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent-blue);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px rgba(0, 122, 255, 0.3);
+}
+
+.combo-step-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.04em;
+}
+
+.combo-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.combo-nav-btn {
+  flex: 0 0 auto;
+  padding: 14px 28px;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-medium);
+  border: none;
+  border-radius: var(--radius-btn);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font);
+  letter-spacing: var(--letter-spacing);
+  transition: all var(--transition);
+}
+
+.combo-nav-btn:hover {
+  box-shadow: var(--shadow-raised);
+}
+
+.combo-nav-btn:active {
+  box-shadow: var(--shadow-pressed);
+  transform: scale(0.97);
+}
+
+.combo-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  box-shadow: var(--shadow-small);
+}
+
+.combo-nav-btn:disabled:hover {
+  box-shadow: var(--shadow-small);
+}
+
+.combo-next-btn {
+  flex: 1;
+}
+
+/* ========================================
+   Responsive — phone
+   ======================================== */
+@media (max-width: 600px) {
+  body {
+    padding: 16px;
+  }
+  .card {
+    padding: 30px 22px;
+  }
+  .question-text {
+    font-size: 20px;
+  }
+  .hold-btn {
+    width: 150px;
+    height: 150px;
+  }
+  .button-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .grid-btn {
+    padding: 16px 10px;
+    font-size: 14px;
+  }
+  .multi-live-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+  }
+  .multi-live-btn .multi-live-label {
+    font-size: 12px;
+  }
+  .rich-option {
+    padding: 16px;
+  }
+  .rich-option-label {
+    font-size: 15px;
+  }
+  .rich-option-desc {
+    font-size: 13px;
+  }
+  .combo-nav-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+   Responsive — iPad
+   ======================================== */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .card {
+    max-width: 520px;
+    padding: 50px 40px;
+  }
+  .option {
+    padding: 18px 20px;
+  }
+  .confirm-btn {
+    padding: 20px;
+    font-size: 17px;
+  }
+  .hold-btn {
+    width: 200px;
+    height: 200px;
+    font-size: 18px;
+  }
+  .button-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .grid-btn {
+    padding: 22px 16px;
+    font-size: 16px;
+  }
+  .submit-btn {
+    padding: 18px;
+    font-size: 17px;
+  }
+  .multi-live-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+  .multi-live-btn .multi-live-label {
+    font-size: 15px;
+  }
+  .rich-option {
+    padding: 22px;
+  }
+  .rich-option-label {
+    font-size: 18px;
+  }
+}
+
+/* ========================================
+   Responsive — large iPad / landscape
+   ======================================== */
+@media (min-width: 1100px) {
+  .card {
+    max-width: 600px;
+    padding: 60px 50px;
+  }
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="card" id="card" style="text-align: center;">
+    <div class="question-label" id="label">Live Control</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="multi-live-grid" id="grid"></div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "multi-live",
+  question: "Audio Controls",
+  extra_info: "Hold any button to activate. Release to deactivate.",
+  buttons: [
+    { label: "Mute Speakers", label_active: "MUTED" },
+    { label: "Mute Mic", label_active: "MIC OFF" },
+    { label: "Bass Boost", label_active: "BOOSTED" },
+    { label: "Night Mode", label_active: "ACTIVE" }
+  ]
+};
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10008';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const grid = document.getElementById('grid');
+
+payload.buttons.forEach((btn, i) => {
+  const el = document.createElement('div');
+  el.className = 'multi-live-btn';
+  el.innerHTML = `
+    <div class="multi-live-ring"></div>
+    <div class="multi-live-label">${btn.label}</div>
+  `;
+  el.dataset.index = i;
+
+  let isActive = false;
+
+  function activate() {
+    if (isActive) return;
+    isActive = true;
+    el.classList.add('active');
+    el.querySelector('.multi-live-label').textContent = btn.label_active || btn.label;
+
+    const response = {
+      port,
+      type: 'multi-live',
+      button_index: i,
+      button_label: btn.label,
+      active: true,
+      timestamp: new Date().toISOString()
+    };
+    console.log('Response:', JSON.stringify(response, null, 2));
+
+    // TODO: POST to API
+    // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+  }
+
+  function deactivate() {
+    if (!isActive) return;
+    isActive = false;
+    el.classList.remove('active');
+    el.querySelector('.multi-live-label').textContent = btn.label;
+
+    const response = {
+      port,
+      type: 'multi-live',
+      button_index: i,
+      button_label: btn.label,
+      active: false,
+      timestamp: new Date().toISOString()
+    };
+    console.log('Response:', JSON.stringify(response, null, 2));
+
+    // TODO: POST to API
+    // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+  }
+
+  // Mouse events
+  el.addEventListener('mousedown', (e) => { e.preventDefault(); activate(); });
+  el.addEventListener('mouseup', deactivate);
+  el.addEventListener('mouseleave', deactivate);
+
+  // Touch events (iPad)
+  el.addEventListener('touchstart', (e) => { e.preventDefault(); activate(); }, { passive: false });
+  el.addEventListener('touchend', (e) => { e.preventDefault(); deactivate(); });
+  el.addEventListener('touchcancel', deactivate);
+
+  // Prevent context menu on long press (iPad Safari)
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  grid.appendChild(el);
+});
+</script>
+</body>
+</html>

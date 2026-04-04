@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="card" id="card" style="text-align: center;">
+    <div class="question-label" id="label">Live Control</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="hold-area">
+      <button class="hold-btn" id="hold-btn">
+        <div class="hold-ring"></div>
+        <div class="hold-label" id="hold-label"></div>
+      </button>
+      <div class="hold-status" id="hold-status">Hold to activate</div>
+    </div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "hold-button",
+  question: "Mute Speakers",
+  extra_info: "Press and hold to mute all audio output. Release to unmute.",
+  label: "MUTE",
+  label_active: "MUTED"
+};
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10006';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const btn = document.getElementById('hold-btn');
+const holdLabel = document.getElementById('hold-label');
+const holdStatus = document.getElementById('hold-status');
+let isActive = false;
+
+function setLabel() {
+  holdLabel.textContent = isActive ? (payload.label_active || payload.label) : payload.label;
+}
+
+function updateStatus() {
+  holdStatus.textContent = isActive ? 'Active — release to deactivate' : 'Hold to activate';
+  holdStatus.classList.toggle('active', isActive);
+}
+
+function activate() {
+  if (isActive) return;
+  isActive = true;
+  btn.classList.add('active');
+  setLabel();
+  updateStatus();
+
+  const response = {
+    port,
+    type: 'hold-button',
+    active: true,
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API -- send active state
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+}
+
+function deactivate() {
+  if (!isActive) return;
+  isActive = false;
+  btn.classList.remove('active');
+  setLabel();
+  updateStatus();
+
+  const response = {
+    port,
+    type: 'hold-button',
+    active: false,
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API -- send inactive state
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+}
+
+// Mouse events
+btn.addEventListener('mousedown', (e) => { e.preventDefault(); activate(); });
+btn.addEventListener('mouseup', deactivate);
+btn.addEventListener('mouseleave', deactivate);
+
+// Touch events (iPad)
+btn.addEventListener('touchstart', (e) => { e.preventDefault(); activate(); }, { passive: false });
+btn.addEventListener('touchend', (e) => { e.preventDefault(); deactivate(); });
+btn.addEventListener('touchcancel', deactivate);
+
+// Prevent context menu on long press (iPad Safari)
+btn.addEventListener('contextmenu', (e) => e.preventDefault());
+
+setLabel();
+updateStatus();
+</script>
+</body>
+</html>

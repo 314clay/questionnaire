@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="../audio-recorder.js"></script>
+  <script src="../audio-widget.js"></script>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Question</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="rich-options" id="options"></div>
+    <button class="submit-btn" id="submit" disabled>Submit</button>
+    <div class="feedback" id="feedback">Response recorded</div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "rich-choice",
+  question: "Which deployment strategy should we use?",
+  extra_info: "Select the approach that best fits our current constraints.",
+  options: [
+    {
+      label: "Blue-Green Deploy",
+      description: "Run two identical production environments. Switch traffic instantly by updating the load balancer.",
+      details: ["Zero downtime", "Instant rollback", "2x infrastructure cost", "Simple DNS switch"],
+      tag: "Recommended"
+    },
+    {
+      label: "Rolling Update",
+      description: "Gradually replace instances one at a time. Each new instance is health-checked before proceeding.",
+      details: ["Minimal extra resources", "Slower rollout", "Partial rollback only", "Good for stateless services"],
+      tag: null
+    },
+    {
+      label: "Canary Release",
+      description: "Route a small percentage of traffic to the new version. Monitor metrics before full rollout.",
+      details: ["Risk-minimized", "Requires traffic splitting", "Best for high-traffic services", "Needs monitoring setup"],
+      tag: "Advanced"
+    }
+  ]
+};
+
+AudioWidget.init();
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10009';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const optionsEl = document.getElementById('options');
+const submitBtn = document.getElementById('submit');
+let selected = null;
+
+payload.options.forEach((opt, i) => {
+  const el = document.createElement('div');
+  el.className = 'rich-option';
+  el.innerHTML = `
+    ${opt.tag ? `<span class="rich-option-tag">${opt.tag}</span>` : ''}
+    <div class="rich-option-header">
+      <div class="option-indicator"></div>
+      <div class="rich-option-label">${opt.label}</div>
+    </div>
+    <div class="rich-option-desc">${opt.description}</div>
+    ${opt.details && opt.details.length ? `
+      <div class="rich-option-details">
+        ${opt.details.map(d => `<span class="rich-option-chip">${d}</span>`).join('')}
+      </div>
+    ` : ''}
+  `;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.rich-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selected = i;
+    submitBtn.disabled = false;
+  });
+  optionsEl.appendChild(el);
+});
+
+// --- Submit (one-shot: locks after submit) ---
+submitBtn.addEventListener('click', () => {
+  if (selected === null) return;
+
+  const response = {
+    port,
+    type: payload.type,
+    answer: payload.options[selected].label,
+    answer_index: selected,
+    audio: AudioWidget.getAudio(),
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+
+  submitBtn.style.display = 'none';
+  optionsEl.classList.add('locked');
+  AudioWidget.lock();
+  document.getElementById('feedback').classList.add('sent');
+});
+</script>
+</body>
+</html>

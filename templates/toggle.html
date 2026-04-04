@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="card" id="card" style="text-align: center;">
+    <div class="question-label" id="label">Control</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="toggle-wrapper">
+      <div class="toggle-track large" id="toggle">
+        <div class="toggle-thumb"></div>
+      </div>
+      <div class="toggle-status" id="status">OFF</div>
+    </div>
+    <div class="last-changed" id="last-changed"></div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "toggle",
+  question: "Franklin's Monitors",
+  extra_info: "Toggle all three displays on Franklin on or off.",
+  initial_state: false
+};
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10002';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+let state = payload.initial_state;
+const toggle = document.getElementById('toggle');
+const status = document.getElementById('status');
+const lastChanged = document.getElementById('last-changed');
+
+function render() {
+  toggle.classList.toggle('on', state);
+  status.textContent = state ? 'ON' : 'OFF';
+  status.className = 'toggle-status ' + (state ? 'on' : 'off');
+}
+
+// --- Toggle (persistent: sends on every change) ---
+toggle.addEventListener('click', () => {
+  state = !state;
+  render();
+
+  const response = {
+    port,
+    type: 'toggle',
+    value: state,
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+  lastChanged.textContent = 'Last toggled: ' + new Date().toLocaleTimeString();
+
+  // TODO: POST to API -- persistent toggles send on every change
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+});
+
+render();
+</script>
+</body>
+</html>

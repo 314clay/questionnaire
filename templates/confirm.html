@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="../audio-recorder.js"></script>
+  <script src="../audio-widget.js"></script>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Confirm</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="confirm-buttons" id="buttons"></div>
+    <button class="submit-btn" id="submit" disabled>Confirm</button>
+    <div class="feedback" id="feedback">Response recorded</div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "confirm",
+  question: "Deploy cat-tracker to production?",
+  extra_info: "This will run migrations and restart the service on Franklin. Current version: v2.4.1 -> v2.5.0",
+  options: [
+    { label: "Yes, deploy", style: "yes" },
+    { label: "No, cancel", style: "no" }
+  ]
+};
+
+AudioWidget.init();
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10005';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const buttonsEl = document.getElementById('buttons');
+const submitBtn = document.getElementById('submit');
+let selected = null;
+
+payload.options.forEach((opt, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'confirm-btn ' + (opt.style || '');
+  btn.textContent = opt.label;
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.confirm-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selected = i;
+    submitBtn.disabled = false;
+  });
+  buttonsEl.appendChild(btn);
+});
+
+// --- Submit (one-shot: locks after submit) ---
+submitBtn.addEventListener('click', () => {
+  if (selected === null) return;
+
+  const response = {
+    port,
+    type: payload.type,
+    answer: payload.options[selected].label,
+    answer_index: selected,
+    confirmed: payload.options[selected].style === 'yes',
+    audio: AudioWidget.getAudio(),
+    timestamp: new Date().toISOString()
+  };
+  console.log('Response:', JSON.stringify(response, null, 2));
+
+  // TODO: POST to API
+  // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+
+  submitBtn.style.display = 'none';
+  buttonsEl.classList.add('locked');
+  AudioWidget.lock();
+  document.getElementById('feedback').classList.add('sent');
+});
+</script>
+</body>
+</html>

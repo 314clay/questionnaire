@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+  <script src="../audio-recorder.js"></script>
+  <script src="../audio-widget.js"></script>
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Multi-Step</div>
+    <div class="combo-progress">
+      <div class="combo-progress-track">
+        <div class="combo-progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="combo-step-text" id="step-text">Step 1 of 3</div>
+    </div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div id="step-content"></div>
+    <div class="combo-nav">
+      <button class="combo-nav-btn" id="back-btn" disabled>Back</button>
+      <button class="submit-btn combo-next-btn" id="next-btn" disabled>Next</button>
+    </div>
+    <div class="combo-audio" id="combo-audio" style="display:none; margin-top: 16px;">
+      <div class="submit-row" style="justify-content: center;">
+        <button type="button" class="audio-btn" id="combo-mic"></button>
+      </div>
+      <div class="audio-status" id="combo-audio-status"></div>
+    </div>
+    <div class="feedback" id="feedback">All responses recorded</div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "combo",
+  question: "Deployment Plan Review",
+  extra_info: "Review and approve each step of the deployment plan.",
+  steps: [
+    {
+      type: "multiple-choice",
+      question: "Which environment?",
+      extra_info: "Select the target environment for this deploy.",
+      options: [
+        { label: "Staging" },
+        { label: "Production" },
+        { label: "Dev" }
+      ]
+    },
+    {
+      type: "text-input",
+      question: "Any special instructions?",
+      extra_info: "Notes for the deploy operator.",
+      placeholder: "e.g. run migration X first..."
+    },
+    {
+      type: "confirm",
+      question: "Ready to deploy?",
+      extra_info: "This will trigger the CI/CD pipeline.",
+      options: [
+        { label: "Yes, deploy", style: "yes" },
+        { label: "No, abort", style: "no" }
+      ]
+    }
+  ]
+};
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10010';
+document.getElementById('port-badge').textContent = ':' + port;
+
+const stepContent = document.getElementById('step-content');
+const questionEl = document.getElementById('question');
+const infoEl = document.getElementById('info');
+const progressFill = document.getElementById('progress-fill');
+const stepText = document.getElementById('step-text');
+const backBtn = document.getElementById('back-btn');
+const nextBtn = document.getElementById('next-btn');
+
+const totalSteps = payload.steps.length;
+let currentStep = 0;
+const answers = new Array(totalSteps).fill(null);
+
+function updateProgress() {
+  const pct = ((currentStep + 1) / totalSteps) * 100;
+  progressFill.style.width = pct + '%';
+  stepText.textContent = `Step ${currentStep + 1} of ${totalSteps}`;
+}
+
+function checkValid() {
+  const answer = answers[currentStep];
+  if (answer === null || answer === undefined) {
+    nextBtn.disabled = true;
+    return;
+  }
+  if (typeof answer === 'string' && answer.trim() === '') {
+    nextBtn.disabled = true;
+    return;
+  }
+  nextBtn.disabled = false;
+}
+
+function renderStep() {
+  const step = payload.steps[currentStep];
+  questionEl.textContent = step.question;
+  infoEl.textContent = step.extra_info || '';
+  stepContent.innerHTML = '';
+
+  updateProgress();
+  backBtn.disabled = currentStep === 0;
+  nextBtn.textContent = currentStep === totalSteps - 1 ? 'Submit' : 'Next';
+
+  if (step.type === 'multiple-choice') {
+    renderMultipleChoice(step);
+  } else if (step.type === 'text-input') {
+    renderTextInput(step);
+  } else if (step.type === 'confirm') {
+    renderConfirm(step);
+  } else if (step.type === 'toggle') {
+    renderToggle(step);
+  }
+
+  checkValid();
+}
+
+function renderMultipleChoice(step) {
+  const container = document.createElement('div');
+  container.className = 'options';
+
+  step.options.forEach((opt, i) => {
+    const el = document.createElement('div');
+    el.className = 'option';
+    if (answers[currentStep] === i) el.classList.add('selected');
+    el.innerHTML = `
+      <div class="option-indicator"></div>
+      <div class="option-content">
+        <div class="option-label">${opt.label}</div>
+        ${opt.info ? `<div class="option-info">${opt.info}</div>` : ''}
+      </div>
+    `;
+    el.addEventListener('click', () => {
+      container.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      answers[currentStep] = i;
+      checkValid();
+    });
+    container.appendChild(el);
+  });
+
+  stepContent.appendChild(container);
+}
+
+function renderTextInput(step) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'text-input-wrapper';
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'text-input';
+  textarea.rows = 3;
+  textarea.placeholder = step.placeholder || 'Type your answer...';
+  if (step.max_length) textarea.maxLength = step.max_length;
+  if (typeof answers[currentStep] === 'string') textarea.value = answers[currentStep];
+
+  const charCount = document.createElement('div');
+  charCount.className = 'char-count';
+
+  function update() {
+    if (step.max_length) {
+      charCount.textContent = textarea.value.length + ' / ' + step.max_length;
+    }
+    answers[currentStep] = textarea.value;
+    checkValid();
+  }
+
+  textarea.addEventListener('input', update);
+  wrapper.appendChild(textarea);
+  wrapper.appendChild(charCount);
+  stepContent.appendChild(wrapper);
+
+  // Text input: allow empty (mark valid if any text, but also allow advancing with empty for optional)
+  // For combo we require non-empty
+  update();
+}
+
+function renderConfirm(step) {
+  const container = document.createElement('div');
+  container.className = 'confirm-buttons';
+
+  step.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'confirm-btn ' + (opt.style || '');
+    if (answers[currentStep] === i) btn.classList.add('selected');
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.confirm-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      answers[currentStep] = i;
+      checkValid();
+    });
+    container.appendChild(btn);
+  });
+
+  stepContent.appendChild(container);
+}
+
+function renderToggle(step) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'toggle-wrapper';
+
+  let isOn = answers[currentStep] === true;
+
+  const status = document.createElement('div');
+  status.className = 'toggle-status ' + (isOn ? 'on' : 'off');
+  status.textContent = isOn ? (step.label_on || 'On') : (step.label_off || 'Off');
+
+  const track = document.createElement('div');
+  track.className = 'toggle-track large' + (isOn ? ' on' : '');
+  track.innerHTML = '<div class="toggle-thumb"></div>';
+
+  track.addEventListener('click', () => {
+    isOn = !isOn;
+    track.classList.toggle('on', isOn);
+    status.className = 'toggle-status ' + (isOn ? 'on' : 'off');
+    status.textContent = isOn ? (step.label_on || 'On') : (step.label_off || 'Off');
+    answers[currentStep] = isOn;
+    checkValid();
+  });
+
+  wrapper.appendChild(status);
+  wrapper.appendChild(track);
+  stepContent.appendChild(wrapper);
+
+  // Toggle always has a valid state
+  if (answers[currentStep] === null) answers[currentStep] = false;
+  checkValid();
+}
+
+// --- Navigation ---
+backBtn.addEventListener('click', () => {
+  if (currentStep > 0) {
+    currentStep--;
+    renderStep();
+  }
+});
+
+nextBtn.addEventListener('click', () => {
+  if (nextBtn.disabled) return;
+
+  if (currentStep < totalSteps - 1) {
+    currentStep++;
+    renderStep();
+  } else {
+    // Final submit
+    const stepAnswers = payload.steps.map((step, i) => {
+      const ans = answers[i];
+      if (step.type === 'multiple-choice') {
+        return { type: step.type, question: step.question, answer: step.options[ans].label, answer_index: ans };
+      } else if (step.type === 'text-input') {
+        return { type: step.type, question: step.question, answer: ans };
+      } else if (step.type === 'confirm') {
+        return { type: step.type, question: step.question, answer: step.options[ans].label, confirmed: step.options[ans].style === 'yes' };
+      } else if (step.type === 'toggle') {
+        return { type: step.type, question: step.question, answer: ans };
+      }
+      return { type: step.type, question: step.question, answer: ans };
+    });
+
+    const response = {
+      port,
+      type: payload.type,
+      title: payload.question,
+      answers: stepAnswers,
+      audio: comboClips.length ? comboClips.map(c => ({ base64: c.base64, mimeType: c.mimeType, duration: c.duration })) : null,
+      timestamp: new Date().toISOString()
+    };
+    console.log('Response:', JSON.stringify(response, null, 2));
+
+    // TODO: POST to API
+    // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+
+    nextBtn.style.display = 'none';
+    backBtn.style.display = 'none';
+    stepContent.classList.add('locked');
+    comboAudioEl.style.display = 'none';
+    document.getElementById('feedback').classList.add('sent');
+  }
+});
+
+// --- Audio (shown on last step only) ---
+const comboAudioEl = document.getElementById('combo-audio');
+const comboMic = document.getElementById('combo-mic');
+const comboAudioStatus = document.getElementById('combo-audio-status');
+const comboClips = [];
+
+const micSVG = `<svg class="mic-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/>
+  <path d="M19 11a1 1 0 0 0-2 0 5 5 0 0 1-10 0 1 1 0 0 0-2 0 7 7 0 0 0 6 6.93V21h-3a1 1 0 0 0 0 2h8a1 1 0 0 0 0-2h-3v-3.07A7 7 0 0 0 19 11z"/>
+</svg>`;
+
+// Clip list element
+const comboClipList = document.createElement('div');
+comboClipList.className = 'audio-clip-list';
+comboAudioStatus.parentNode.insertBefore(comboClipList, comboAudioStatus.nextSibling);
+
+function renderComboClips() {
+  comboClipList.innerHTML = '';
+  comboMic.classList.toggle('has-audio', comboClips.length > 0);
+  comboClips.forEach((clip, i) => {
+    const row = document.createElement('div');
+    row.className = 'audio-clip';
+    const kb = Math.round(clip.sizeBytes / 1024);
+    row.innerHTML = `
+      <span class="audio-clip-label">Clip ${i + 1}</span>
+      <span class="audio-clip-meta">${clip.durationFormatted}, ${kb}KB</span>
+      <button class="audio-remove" type="button">&times;</button>
+    `;
+    row.querySelector('.audio-remove').addEventListener('click', () => {
+      comboClips.splice(i, 1);
+      renderComboClips();
+    });
+    comboClipList.appendChild(row);
+  });
+}
+
+if (AudioRecorder.supported) {
+  comboMic.innerHTML = micSVG;
+  comboMic.title = 'Record audio clip';
+
+  comboMic.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (AudioRecorder.isRecording()) {
+      comboMic.classList.remove('recording');
+      comboAudioStatus.innerHTML = 'Processing...';
+      const data = await AudioRecorder.stop();
+      comboAudioStatus.textContent = '';
+      if (data) {
+        comboClips.push(data);
+        renderComboClips();
+      }
+    } else {
+      const ok = await AudioRecorder.start((time) => {
+        comboAudioStatus.innerHTML = `<span class="rec-dot"></span> Recording ${time}`;
+      });
+      if (ok) {
+        comboMic.classList.add('recording');
+      } else {
+        comboAudioStatus.textContent = 'Mic access denied';
+        setTimeout(() => { comboAudioStatus.textContent = ''; }, 3000);
+      }
+    }
+  });
+} else {
+  comboAudioEl.style.display = 'none';
+}
+
+// Show/hide audio section based on step
+const origRenderStep = renderStep;
+renderStep = function() {
+  origRenderStep();
+  if (AudioRecorder.supported) {
+    comboAudioEl.style.display = currentStep === totalSteps - 1 ? '' : 'none';
+  }
+};
+
+// --- Start ---
+renderStep();
+</script>
+</body>
+</html>

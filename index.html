@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire Templates</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      flex-direction: column;
+      gap: 25px;
+      align-items: center;
+      padding: 50px 25px 80px;
+    }
+
+    /* Hero header */
+    .index-hero {
+      text-align: center;
+      max-width: 500px;
+      margin-bottom: 16px;
+    }
+
+    .index-hero .hero-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 24px;
+      background: var(--surface-base);
+      box-shadow: var(--shadow-raised);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 25px;
+    }
+
+    .index-hero h1 {
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .index-hero p {
+      color: var(--text-secondary);
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    /* Template gallery grid */
+    .template-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* Template card links */
+    .template-link {
+      display: block;
+      background: var(--surface-base);
+      box-shadow: var(--shadow-medium);
+      border-radius: var(--radius-card);
+      border: 2px solid transparent;
+      padding: 25px;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    }
+
+    .template-link:hover {
+      box-shadow: var(--shadow-raised);
+      transform: translateY(-2px);
+    }
+
+    .template-link:active {
+      box-shadow: var(--shadow-pressed);
+      transform: scale(0.98);
+    }
+
+    .template-link .icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-btn-sm);
+      background: var(--surface-base);
+      box-shadow: var(--shadow-small);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+
+    .template-link .name {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text-primary);
+    }
+
+    .template-link .desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .template-link .tag {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      background: var(--surface-base);
+      box-shadow: var(--shadow-small);
+    }
+
+    .tag.oneshot    { color: var(--accent-blue); }
+    .tag.persist    { color: var(--accent-green); }
+    .tag.live       { color: var(--accent-amber); }
+    .tag.flexible   { color: var(--accent-red); }
+    .tag.multistep  { color: #AF52DE; }
+
+    /* Footer */
+    .index-footer {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    @media (min-width: 768px) and (max-width: 1100px) {
+      .template-grid {
+        max-width: 580px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="index-hero">
+    <div class="hero-icon">&#9881;</div>
+    <h1>Questionnaire Templates</h1>
+    <p>Frontend templates for the Franklin questionnaire kiosk system. Payload-driven, iPad-optimized.</p>
+  </div>
+
+  <div class="template-grid">
+
+    <a class="template-link" href="templates/multiple-choice.html">
+      <div class="icon">&#9675;</div>
+      <div class="name">Multiple Choice</div>
+      <div class="desc">Select one option from a list. Supports labels and extra info per option.</div>
+      <span class="tag oneshot">One-shot</span>
+    </a>
+
+    <a class="template-link" href="templates/multi-select.html">
+      <div class="icon">&#9745;</div>
+      <div class="name">Multi-Select</div>
+      <div class="desc">Select multiple options with checkboxes. Good for preference gathering.</div>
+      <span class="tag oneshot">One-shot</span>
+    </a>
+
+    <a class="template-link" href="templates/toggle.html">
+      <div class="icon">&#9211;</div>
+      <div class="name">Toggle</div>
+      <div class="desc">Persistent on/off switch. Stays open, sends state on every change.</div>
+      <span class="tag persist">Persistent</span>
+    </a>
+
+    <a class="template-link" href="templates/confirm.html">
+      <div class="icon">&#10003;</div>
+      <div class="name">Confirmation</div>
+      <div class="desc">Yes/No decision with context. Good for deploy approvals, destructive actions.</div>
+      <span class="tag oneshot">One-shot</span>
+    </a>
+
+    <a class="template-link" href="templates/hold-button.html">
+      <div class="icon">&#9679;</div>
+      <div class="name">Hold Button</div>
+      <div class="desc">Press and hold to activate. Release to deactivate. For live persistent controls.</div>
+      <span class="tag live">Live Control</span>
+    </a>
+
+    <a class="template-link" href="templates/button-grid.html">
+      <div class="icon">&#9638;</div>
+      <div class="name">Button Grid</div>
+      <div class="desc">Responsive grid of buttons. Each can be one-shot or toggle. Payload-driven layout.</div>
+      <span class="tag flexible">Flexible</span>
+    </a>
+
+    <a class="template-link" href="templates/multi-live.html">
+      <div class="icon">&#9673;&#9673;</div>
+      <div class="name">Multi-Live</div>
+      <div class="desc">Multiple hold-to-activate buttons in a grid. Each independently holdable for live control.</div>
+      <span class="tag live">Live Control</span>
+    </a>
+
+    <a class="template-link" href="templates/rich-choice.html">
+      <div class="icon">&#9638;</div>
+      <div class="name">Rich Choice</div>
+      <div class="desc">Enhanced selection with titles, descriptions, detail chips, and optional tags per option.</div>
+      <span class="tag oneshot">One-shot</span>
+    </a>
+
+    <a class="template-link" href="templates/combo.html">
+      <div class="icon">&#9654;&#9654;</div>
+      <div class="name">Combo</div>
+      <div class="desc">Multi-step wizard flow. Progress bar, back/next navigation, submits all answers at the end.</div>
+      <span class="tag multistep">Multi-step</span>
+    </a>
+
+  </div>
+
+  <div class="index-footer">Franklin Questionnaire Kiosk &middot; Neumorphic Design System</div>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionnaire</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+  <div class="card" id="card">
+    <div class="question-label" id="label">Select</div>
+    <div class="question-text" id="question"></div>
+    <div class="question-info" id="info"></div>
+    <div class="button-grid" id="grid"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+  <div class="port-badge" id="port-badge"></div>
+
+<script>
+// --- Payload (injected by server) ---
+const payload = {
+  type: "button-grid",
+  question: "Which rooms need attention?",
+  extra_info: "Tap to select rooms. Toggle buttons can be turned on and off. One-shot buttons fire once.",
+  buttons: [
+    { label: "Living Room", mode: "toggle" },
+    { label: "Kitchen", mode: "toggle" },
+    { label: "Bedroom", mode: "toggle" },
+    { label: "Bathroom", mode: "toggle" },
+    { label: "Office", mode: "toggle" },
+    { label: "Garage", mode: "oneshot" },
+    { label: "Patio", mode: "oneshot" },
+    { label: "Hallway", mode: "toggle" }
+  ]
+};
+
+// --- Init ---
+const port = location.pathname.split('/').filter(Boolean).pop() || '10007';
+document.getElementById('port-badge').textContent = ':' + port;
+document.getElementById('question').textContent = payload.question;
+document.getElementById('info').textContent = payload.extra_info || '';
+
+const gridEl = document.getElementById('grid');
+const toggleState = {};
+
+payload.buttons.forEach((btnDef) => {
+  const btn = document.createElement('button');
+  btn.className = 'grid-btn';
+  btn.textContent = btnDef.label;
+
+  if (btnDef.mode === 'toggle') {
+    toggleState[btnDef.label] = false;
+
+    btn.addEventListener('click', () => {
+      toggleState[btnDef.label] = !toggleState[btnDef.label];
+      btn.classList.toggle('active', toggleState[btnDef.label]);
+
+      const response = {
+        port,
+        type: 'button-grid',
+        button: btnDef.label,
+        mode: 'toggle',
+        active: toggleState[btnDef.label],
+        timestamp: new Date().toISOString()
+      };
+      console.log('Response:', JSON.stringify(response, null, 2));
+
+      // TODO: POST to API -- toggle sends on every state change
+      // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+    });
+  } else {
+    // One-shot: fires once, then locks
+    btn.addEventListener('click', () => {
+      btn.classList.add('fired');
+
+      const response = {
+        port,
+        type: 'button-grid',
+        button: btnDef.label,
+        mode: 'oneshot',
+        timestamp: new Date().toISOString()
+      };
+      console.log('Response:', JSON.stringify(response, null, 2));
+
+      // TODO: POST to API -- one-shot fires once
+      // fetch(`/api/respond/${port}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(response) });
+    });
+  }
+
+  gridEl.appendChild(btn);
+});
+</script>
+</body>
+</html>
