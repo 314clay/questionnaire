@@ -1,0 +1,9 @@
+project:
+  name: questionnaire
+  port: "3050"
+  db_name: questionnaire
+  health_endpoint: /api/state
+  health_url: https://questionnaire.claypersonalprojects.cc/api/state
+  test_command: python test_questionnaire.py
+  deploy_path: ~/questionnaire
+  runtime: python

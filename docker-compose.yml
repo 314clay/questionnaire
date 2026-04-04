@@ -1,0 +1,20 @@
+services:
+  questionnaire:
+    build: .
+    container_name: questionnaire
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - DATABASE_URL=postgresql://postgres@127.0.0.1:5433/questionnaire
+      - AUDIO_DIR=/data/audio
+    volumes:
+      - questionnaire-audio:/data/audio
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3050/api/state"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  questionnaire-audio:

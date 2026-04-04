@@ -1,0 +1,29 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  ci-cd:
+    uses: ericcarnold/franklin-infra/.github/workflows/ci-cd.yml@main
+    with:
+      project_name: questionnaire
+      db_name: questionnaire
+      port: "3050"
+      health_endpoint: /api/state
+      health_url: https://questionnaire.claypersonalprojects.cc/api/state
+      test_command: python test_questionnaire.py
+      deploy_path: ~/questionnaire
+      runtime: python
+      schema_file: schema.sql
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      FRANKLIN_SSH_KEY: ${{ secrets.FRANKLIN_SSH_KEY }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
