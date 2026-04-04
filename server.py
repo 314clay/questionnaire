@@ -227,19 +227,29 @@ def get_xauthority() -> str | None:
 
 def execute_dpms(response_data: dict):
     value = response_data.get("value", False)
-    state = "on" if value else "off"
     xauth = get_xauthority()
     env = {**os.environ, "DISPLAY": ":0"}
     if xauth:
         env["XAUTHORITY"] = xauth
-    try:
-        result = subprocess.run(
-            ["xset", "dpms", "force", state],
-            env=env, timeout=5, capture_output=True, text=True,
+
+    def xset(*args):
+        return subprocess.run(
+            ["xset", *args], env=env, timeout=5, capture_output=True, text=True,
         )
-        log.info(f"DPMS {state}: rc={result.returncode} stderr={result.stderr.strip()}")
+
+    try:
+        if value:
+            # Monitors ON: wake up and disable DPMS idle timeouts
+            xset("dpms", "force", "on")
+            xset("-dpms")
+            log.info("DPMS on + idle timeouts disabled")
+        else:
+            # Monitors OFF: enable DPMS and force off
+            xset("+dpms")
+            xset("dpms", "force", "off")
+            log.info("DPMS off + idle timeouts enabled")
     except Exception as e:
-        log.error(f"DPMS {state} failed: {e}")
+        log.error(f"DPMS toggle failed: {e}")
 
 
 ACTIONS = {
