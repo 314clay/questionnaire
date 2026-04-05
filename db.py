@@ -22,12 +22,29 @@ MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 async def run_migrations():
     """Apply any pending up-migrations on startup."""
     async with pool.acquire() as conn:
+        # Check if _migrations table is new (first time running migrations)
+        existed = await conn.fetchval(
+            "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = '_migrations')"
+        )
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS _migrations (
                 name TEXT PRIMARY KEY,
                 applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
+
+        # If schema exists but _migrations is new, mark initial migration as applied
+        if not existed:
+            has_tables = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'questionnaires')"
+            )
+            if has_tables:
+                await conn.execute(
+                    "INSERT INTO _migrations (name) VALUES ($1) ON CONFLICT DO NOTHING",
+                    "000001_initial.up.sql",
+                )
+                log.info("Existing schema detected — marked 000001_initial.up.sql as applied")
+
         applied = {r["name"] for r in await conn.fetch("SELECT name FROM _migrations")}
 
         up_files = sorted(MIGRATIONS_DIR.glob("*.up.sql"))
