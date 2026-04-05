@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server.py db.py models.py ./
 COPY templates/ templates/
 COPY static/ static/
+COPY migrations/ migrations/
 COPY index.html .
 
 EXPOSE 3050
