@@ -1,6 +1,8 @@
 import json
+import logging
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import asyncpg
 
@@ -10,13 +12,42 @@ DATABASE_URL = os.environ.get(
 )
 
 pool: asyncpg.Pool | None = None
+log = logging.getLogger("questionnaire.db")
 
-PERSISTENT_TYPES = {"toggle", "hold-button", "multi-live", "button-grid"}
+PERSISTENT_TYPES = {"toggle", "hold-button", "multi-live", "button-grid", "live-stream"}
+
+MIGRATIONS_DIR = Path(__file__).parent / "migrations"
+
+
+async def run_migrations():
+    """Apply any pending up-migrations on startup."""
+    async with pool.acquire() as conn:
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS _migrations (
+                name TEXT PRIMARY KEY,
+                applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        """)
+        applied = {r["name"] for r in await conn.fetch("SELECT name FROM _migrations")}
+
+        up_files = sorted(MIGRATIONS_DIR.glob("*.up.sql"))
+        for f in up_files:
+            if f.name in applied:
+                continue
+            sql = f.read_text()
+            try:
+                await conn.execute(sql)
+                await conn.execute("INSERT INTO _migrations (name) VALUES ($1)", f.name)
+                log.info(f"Migration applied: {f.name}")
+            except Exception as e:
+                log.error(f"Migration failed: {f.name}: {e}")
+                raise
 
 
 async def init_pool():
     global pool
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
+    await run_migrations()
 
 
 async def close_pool():

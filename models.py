@@ -6,6 +6,7 @@ from pydantic import BaseModel, field_validator
 VALID_TYPES = {
     "multiple-choice", "multi-select", "confirm", "rich-choice",
     "toggle", "hold-button", "multi-live", "button-grid", "combo",
+    "live-stream",
 }
 
 ID_PATTERN = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{1,62}[a-zA-Z0-9]$")

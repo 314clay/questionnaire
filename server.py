@@ -7,13 +7,14 @@ import os
 import re
 import subprocess
 import time
+import uuid
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 import asyncpg
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from jinja2 import Template
@@ -58,6 +59,7 @@ def load_templates():
         raw = raw.replace('href="../style.css"', 'href="/static/style.css"')
         raw = raw.replace('src="../audio-recorder.js"', 'src="/static/audio-recorder.js"')
         raw = raw.replace('src="../audio-widget.js"', 'src="/static/audio-widget.js"')
+        raw = raw.replace('src="../audio-streamer.js"', 'src="/static/audio-streamer.js"')
         TEMPLATES[html_file.stem] = raw
 
 
@@ -90,7 +92,9 @@ def render_template(template_type: str, qid: str, payload: dict, closed: bool = 
     )
 
     # Inject SSE auto-reload listener (for channel/ask flow)
-    reload_script = f"""
+    # Skip for live-stream — it uses WebSocket, not SSE
+    if template_type != "live-stream":
+        reload_script = f"""
 <script>
 (function() {{
   const es = new EventSource('/api/listen/{qid}');
@@ -98,7 +102,7 @@ def render_template(template_type: str, qid: str, payload: dict, closed: bool = 
   es.addEventListener('closed', () => {{ location.reload(); }});
 }})();
 </script>"""
-    html = html.replace("</body>", reload_script + "\n</body>")
+        html = html.replace("</body>", reload_script + "\n</body>")
 
     # If closed, inject a disabling script
     if closed:
@@ -555,6 +559,95 @@ async def index():
     ]
     html = INDEX_TEMPLATE.render(questionnaires=questionnaires, total=len(questionnaires))
     return HTMLResponse(html)
+
+
+# --- WebSocket for live-stream ---
+
+STREAM_AUDIO_DIR = Path(os.environ.get("STREAM_AUDIO_DIR", "stream_audio"))
+
+ws_sessions: dict[str, set[WebSocket]] = defaultdict(set)
+
+
+@app.websocket("/ws/{qid}")
+async def websocket_stream(websocket: WebSocket, qid: str):
+    q = await db.get_questionnaire(qid)
+    if not q or q["closed_at"]:
+        await websocket.close(code=4004)
+        return
+
+    await websocket.accept()
+    ws_sessions[qid].add(websocket)
+
+    session_id = str(uuid.uuid4())[:8]
+    mime_type = "audio/webm"
+    audio_file = None
+    STREAM_AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    prefix = f"{ts}_{qid}_{session_id}"
+
+    log.info(f"[ws:{session_id}] Connected for {qid}")
+
+    try:
+        while True:
+            message = await websocket.receive()
+
+            if message.get("type") == "websocket.disconnect":
+                break
+
+            if "bytes" in message and message["bytes"]:
+                # Binary frame = audio chunk
+                if audio_file is None:
+                    ext = "webm" if "webm" in mime_type else "ogg" if "ogg" in mime_type else "mp4"
+                    audio_path = STREAM_AUDIO_DIR / f"{prefix}.{ext}"
+                    audio_file = open(audio_path, "ab")
+                    log.info(f"[ws:{session_id}] Recording to {audio_path.name}")
+                audio_file.write(message["bytes"])
+
+            elif "text" in message and message["text"]:
+                try:
+                    msg = json.loads(message["text"])
+                except json.JSONDecodeError:
+                    continue
+
+                msg_type = msg.get("type")
+
+                if msg_type == "session_start":
+                    mime_type = msg.get("mime_type", mime_type)
+                    await websocket.send_json({"type": "ack", "session_id": session_id})
+
+                elif msg_type == "ping":
+                    await websocket.send_json({"type": "pong"})
+
+                elif msg_type == "button_event":
+                    # Store button events as responses in the DB
+                    response_data = {
+                        "source": "websocket",
+                        "session_id": session_id,
+                        **msg,
+                    }
+                    await db.store_response(qid, response_data, True, True)
+                    await broadcast(qid, "response", {
+                        "response_data": response_data,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                    log.info(f"[ws:{session_id}] {msg_type}: {msg.get('button_label')} active={msg.get('active')}")
+
+                elif msg_type in ("audio_start", "audio_stop"):
+                    log.info(f"[ws:{session_id}] {msg_type}")
+
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        log.error(f"[ws:{session_id}] Error: {e}")
+    finally:
+        ws_sessions[qid].discard(websocket)
+        if not ws_sessions[qid]:
+            del ws_sessions[qid]
+        if audio_file:
+            audio_file.close()
+            size = os.path.getsize(audio_file.name)
+            log.info(f"[ws:{session_id}] Audio saved: {audio_file.name} ({size} bytes)")
+        log.info(f"[ws:{session_id}] Disconnected")
 
 
 @app.get("/{qid}")

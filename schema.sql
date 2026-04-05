@@ -2,7 +2,8 @@ CREATE TABLE questionnaires (
   id TEXT PRIMARY KEY,
   type TEXT NOT NULL CHECK (type IN (
     'multiple-choice', 'multi-select', 'confirm', 'rich-choice',
-    'toggle', 'hold-button', 'multi-live', 'button-grid', 'combo'
+    'toggle', 'hold-button', 'multi-live', 'button-grid', 'combo',
+    'live-stream'
   )),
   title TEXT NOT NULL,
   payload JSONB NOT NULL,

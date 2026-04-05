@@ -1026,6 +1026,108 @@ body {
 }
 
 /* ========================================
+   Live Stream — connection status
+   ======================================== */
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-base);
+  box-shadow: var(--shadow-pressed);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.ws-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ws-status.connected .ws-dot  { background: var(--accent-green); }
+.ws-status.connected .ws-text { color: var(--accent-green); }
+.ws-status.connecting .ws-dot  { background: var(--accent-amber); animation: recDotBlink 1s step-end infinite; }
+.ws-status.connecting .ws-text { color: var(--accent-amber); }
+.ws-status.disconnected .ws-dot  { background: var(--accent-red); }
+.ws-status.disconnected .ws-text { color: var(--accent-red); }
+
+/* ========================================
+   Live Stream — mic indicator
+   ======================================== */
+.mic-live-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.mic-live-btn {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--surface-base);
+  box-shadow: var(--shadow-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow var(--transition);
+}
+
+.mic-live-btn .mic-live-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  transition: border-color var(--transition);
+  pointer-events: none;
+}
+
+.mic-live-btn.streaming {
+  box-shadow: var(--shadow-pressed);
+}
+
+.mic-live-btn.streaming .mic-live-ring {
+  border-color: var(--accent-green);
+  animation: micPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes micPulse {
+  0%, 100% { opacity: 1; border-color: var(--accent-green); }
+  50%      { opacity: 0.5; border-color: rgba(48, 209, 88, 0.3); }
+}
+
+.mic-live-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.mic-live-btn.streaming .mic-live-icon {
+  color: var(--accent-green);
+}
+
+.mic-live-timer {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+}
+
+.mic-live-level {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+}
+
+/* ========================================
    Responsive — phone
    ======================================== */
 @media (max-width: 600px) {
@@ -1056,6 +1158,14 @@ body {
   }
   .multi-live-btn .multi-live-label {
     font-size: 12px;
+  }
+  .mic-live-btn {
+    width: 110px;
+    height: 110px;
+  }
+  .mic-live-icon {
+    width: 36px;
+    height: 36px;
   }
   .rich-option {
     padding: 16px;
@@ -1108,6 +1218,10 @@ body {
   }
   .multi-live-btn .multi-live-label {
     font-size: 15px;
+  }
+  .mic-live-btn {
+    width: 160px;
+    height: 160px;
   }
   .rich-option {
     padding: 22px;
