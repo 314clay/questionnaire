@@ -604,6 +604,14 @@ async def websocket_stream(websocket: WebSocket, qid: str):
                     log.info(f"[ws:{session_id}] Recording to {audio_path.name}")
                 audio_file.write(message["bytes"])
 
+                # Fan out audio to peer WS consumers (e.g. whisper-transcriber, glive-bridge)
+                for peer in ws_sessions[qid]:
+                    if peer is not websocket:
+                        try:
+                            await peer.send_bytes(message["bytes"])
+                        except Exception:
+                            pass
+
             elif "text" in message and message["text"]:
                 try:
                     msg = json.loads(message["text"])
