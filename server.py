@@ -54,12 +54,13 @@ PORT_BADGE_RE = re.compile(
 
 def load_templates():
     template_dir = Path(__file__).parent / "templates"
+    cache_bust = f"?v={int(time.time())}"
     for html_file in template_dir.glob("*.html"):
         raw = html_file.read_text()
-        raw = raw.replace('href="../style.css"', 'href="/static/style.css"')
-        raw = raw.replace('src="../audio-recorder.js"', 'src="/static/audio-recorder.js"')
-        raw = raw.replace('src="../audio-widget.js"', 'src="/static/audio-widget.js"')
-        raw = raw.replace('src="../audio-streamer.js"', 'src="/static/audio-streamer.js"')
+        raw = raw.replace('href="../style.css"', f'href="/static/style.css{cache_bust}"')
+        raw = raw.replace('src="../audio-recorder.js"', f'src="/static/audio-recorder.js{cache_bust}"')
+        raw = raw.replace('src="../audio-widget.js"', f'src="/static/audio-widget.js{cache_bust}"')
+        raw = raw.replace('src="../audio-streamer.js"', f'src="/static/audio-streamer.js{cache_bust}"')
         TEMPLATES[html_file.stem] = raw
 
 
