@@ -252,11 +252,18 @@ payload.buttons.forEach((btnDef, i) => {
   } else {
     // oneshot
     btn.addEventListener('click', () => {
+      if (btn.classList.contains('fired')) return;
       btn.classList.add('fired');
+      btn.textContent = btnDef.label_active || '✓ ' + btnDef.label;
       sendEvent({
         type: 'button_event', button_index: i, button_label: btnDef.label,
         mode: 'oneshot', timestamp: new Date().toISOString()
       });
+      // Reset after brief feedback so it can be clicked again
+      setTimeout(() => {
+        btn.classList.remove('fired');
+        btn.textContent = btnDef.label;
+      }, 800);
     });
   }
 
