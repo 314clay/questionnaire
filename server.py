@@ -605,7 +605,7 @@ async def websocket_stream(websocket: WebSocket, qid: str):
                 audio_file.write(message["bytes"])
 
                 # Fan out audio to peer WS consumers (e.g. whisper-transcriber, glive-bridge)
-                for peer in ws_sessions[qid]:
+                for peer in list(ws_sessions[qid]):
                     if peer is not websocket:
                         try:
                             await peer.send_bytes(message["bytes"])
